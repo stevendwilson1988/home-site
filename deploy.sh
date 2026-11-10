@@ -143,7 +143,7 @@ if (( DRY )); then
 fi
 
 # ---------------------------------------------------------------- apply
-sudo -v   # ask for the password once, before anything changes
+sudo true   # ask for a password (if sudo needs one) before anything changes
 
 stamp=$(date +%Y%m%d-%H%M%S)
 bdir=$BACKUP_ROOT/$stamp
