@@ -9,5 +9,11 @@ The home page served from `/var/www/html`, including the scroll-to-Snake game.
 
 ## Deploy
 
-    sudo cp index.html favicon.ico favicon.svg apple-touch-icon.png lake.jpg /var/www/html/
-    sudo cp snake/snake.js snake/littlejs.min.js snake/LITTLEJS-LICENSE.txt /var/www/html/snake/
+Commit your changes, then:
+
+    ./deploy.sh -n   # dry run: list what would change
+    ./deploy.sh      # copy changed files to /var/www/html
+
+It refuses to run with uncommitted changes, replaces only files that differ
+from the live copy, and backs up each replaced live file as
+`<name>.bak-YYYYMMDD-HHMMSS`.
