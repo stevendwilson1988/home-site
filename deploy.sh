@@ -146,9 +146,14 @@ fi
 sudo true   # ask for a password (if sudo needs one) before anything changes
 
 stamp=$(date +%Y%m%d-%H%M%S)
-bdir=$BACKUP_ROOT/$stamp
 sudo install -d -m 755 -o root -g root "$BACKUP_ROOT"
-sudo install -d -m 700 -o root -g root "$bdir"
+# A fresh folder per deploy, even for two deploys in the same second.
+bdir=$BACKUP_ROOT/$stamp
+n=1
+until sudo mkdir -m 700 "$bdir" 2>/dev/null; do
+  n=$((n + 1)); bdir=$BACKUP_ROOT/$stamp-$n
+  (( n < 100 )) || { echo "Could not create a backup folder in $BACKUP_ROOT" >&2; exit 1; }
+done
 
 # Back up everything that will be replaced or removed before touching the site.
 for c in "${changes[@]}"; do
