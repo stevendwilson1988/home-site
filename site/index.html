@@ -327,6 +327,39 @@
   #snake-btn:focus-visible { outline: 2px solid var(--btn-bg); outline-offset: 4px; }
   #snake-btn:disabled { opacity: .5; cursor: default; transform: none; }
 
+  /* Top 5 leaderboard, shared by every visitor (snake.js fills it from /snake/api/scores). */
+  .play-top { margin: 0 0 1.6rem; max-width: 11rem; }
+  .play-top[hidden] { display: none; }
+  .play-top-title { margin: 0 0 .5rem; font: 600 .72rem var(--body); letter-spacing: .16em; text-transform: uppercase; color: var(--stage-soft); }
+  .snake-top { list-style: none; margin: 0; padding: 0; text-align: left; font: 700 1rem / 1.55 var(--display); font-variant-numeric: tabular-nums; }
+  .snake-top li { display: grid; grid-template-columns: 1.4em 1fr auto; gap: .6rem; }
+  .snake-top .rank { color: var(--stage-soft); font-weight: 600; }
+  .snake-top .who { letter-spacing: .12em; }
+  .snake-top .empty { color: var(--stage-soft); font-weight: 600; }
+  .snake-top .is-you { color: var(--best); }
+  .snake-top .is-you .who::after { content: " ●"; font-size: .5em; vertical-align: middle; letter-spacing: 0; }
+  #snake-top-mini { display: none; }
+
+  #snake-initials { display: flex; flex-direction: column; align-items: center; gap: .45rem; }
+  #snake-initials[hidden] { display: none; }
+  #snake-initials label { font: 600 .72rem var(--body); letter-spacing: .16em; text-transform: uppercase; color: var(--stage-soft); }
+  .initials-row { display: flex; gap: .5rem; }
+  #snake-name {
+    width: 5.2ch; min-height: 48px; padding: 0 .4rem 0 .7rem;
+    font: 700 1.4rem var(--display); letter-spacing: .3em; text-transform: uppercase; text-align: center;
+    color: var(--stage-ink); background: var(--kbd-bg);
+    border: 1px solid var(--kbd-border); border-bottom-width: 2px; border-radius: 12px;
+  }
+  #snake-name:focus-visible { outline: 2px solid var(--btn-bg); outline-offset: 2px; }
+  #snake-initials button {
+    font: 700 1rem var(--display); min-height: 48px; padding: 0 1.3rem;
+    color: var(--stage-ink); background: transparent;
+    border: 2px solid var(--btn-bg); border-radius: 999px; cursor: pointer;
+  }
+  #snake-initials button:hover { background: var(--kbd-bg); }
+  #snake-initials button:focus-visible { outline: 2px solid var(--btn-bg); outline-offset: 3px; }
+  #snake-initials button:disabled { opacity: .5; cursor: default; }
+
   #scroll-cue {
     position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); z-index: 1;
     display: flex; flex-direction: column; align-items: center; gap: .3rem;
@@ -349,6 +382,11 @@
     .play-sub, .play-help, .play-kicker { display: none; }
     .play-score { justify-content: center; margin: 0; }
     .play-score dd { font-size: 1.6rem; }
+    /* no room beside the board: the top 5 shows in the overlay between games instead */
+    .play-top { display: none; }
+    #snake-top-mini { display: block; width: min(10rem, 100%); font-size: .95rem; line-height: 1.45; }
+    #snake-top-mini:empty, #snake-initials:not([hidden]) ~ #snake-top-mini { display: none; }
+    .play-overlay { gap: .8rem; }
   }
 
   @media (max-width: 520px) {
@@ -402,13 +440,27 @@
         <div><dt>Score</dt><dd id="snake-score" aria-live="polite">0</dd></div>
         <div><dt>Best</dt><dd id="snake-best">0</dd></div>
       </dl>
+      <div class="play-top" id="snake-top-wrap" hidden>
+        <h3 class="play-top-title" id="snake-top-title">Top 5</h3>
+        <ol class="snake-top" id="snake-top" aria-labelledby="snake-top-title"></ol>
+      </div>
       <p class="play-help"><kbd>←</kbd> <kbd>↑</kbd> <kbd>→</kbd> <kbd>↓</kbd> or <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> to steer, swipe on touch screens, <kbd>Space</kbd> to pause.</p>
     </div>
     <div class="play-board-wrap" id="snake-wrap">
       <div class="play-board" id="snake-board" role="img" aria-label="Snake game board"></div>
       <div class="play-overlay">
         <p id="snake-msg">Warming up…</p>
+        <form id="snake-initials" hidden>
+          <label for="snake-name">Your initials</label>
+          <div class="initials-row">
+            <input id="snake-name" name="initials" maxlength="3" required pattern="[A-Za-z]{3}"
+                   autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="done"
+                   title="Three letters">
+            <button type="submit">Save</button>
+          </div>
+        </form>
         <button id="snake-btn" type="button" disabled>Play</button>
+        <ol class="snake-top" id="snake-top-mini" aria-label="Top 5"></ol>
       </div>
     </div>
   </div>

@@ -1,0 +1,14 @@
+[Unit]
+Description=Snake leaderboard (top 5 on the home page)
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/opt/snake-scores
+ExecStart=/usr/bin/python3 -m gunicorn --workers 1 --threads 4 --bind 127.0.0.1:5003 app:app
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

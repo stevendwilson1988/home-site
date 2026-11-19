@@ -16,6 +16,10 @@
   const btn = document.getElementById('snake-btn');
   const scoreEl = document.getElementById('snake-score');
   const bestEl = document.getElementById('snake-best');
+  const topWrap = document.getElementById('snake-top-wrap');
+  const topLists = [document.getElementById('snake-top'), document.getElementById('snake-top-mini')];
+  const initialsForm = document.getElementById('snake-initials');
+  const initialsInput = document.getElementById('snake-name');
 
   // ------------------------------------------------------------ game state
   let state = 'loading';  // loading | ready | playing | paused | over
@@ -27,6 +31,87 @@
 
   try { best = +localStorage.getItem('snake-best') || 0; } catch (e) {}
   bestEl.textContent = best;
+
+  // ------------------------------------------------------- shared top 5
+  // Everyone's best five, one row per set of initials, kept by the snake-scores service
+  // (home-site/server). If it can't be reached the board hides and the game plays on.
+  const API = '/snake/api';
+  const TOP_N = 5;
+  let board = null;            // last list from the server, or null if it never answered
+  let gameId = 0, tokenReq = null;
+  let myInitials = '';
+  try { myInitials = localStorage.getItem('snake-initials') || ''; } catch (e) {}
+
+  const api = (path, body) => fetch(API + path, body === undefined ? { cache: 'no-store' } : {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+  }).then(r => r.json().catch(() => ({})).then(d => {
+    if (!r.ok) throw new Error(d.error || 'The leaderboard is unavailable.');
+    return d;
+  }));
+
+  function renderBoard() {
+    topWrap.hidden = !board;
+    for (const ol of topLists) {
+      ol.replaceChildren();
+      if (!board) continue;
+      for (let i = 0; i < TOP_N; i++) {
+        const e = board[i], li = document.createElement('li');
+        const cells = [i + 1, e ? e.name : '———', e ? e.score : ''];
+        ['rank', 'who', 'pts'].forEach((cls, k) => {
+          const s = document.createElement('span');
+          s.className = cls; s.textContent = cells[k];
+          li.appendChild(s);
+        });
+        if (!e) li.classList.add('empty');
+        else if (e.name === myInitials) li.classList.add('is-you');
+        ol.appendChild(li);
+      }
+    }
+  }
+
+  function loadBoard() {
+    return api('/scores').then(d => { board = d.top; }, () => {}).then(renderBoard);
+  }
+
+  const makesBoard = s => board && s > 0 && (board.length < TOP_N || s > board[TOP_N - 1].score);
+
+  function offerSave(id, s) {
+    if (id !== gameId || state !== 'over' || !tokenReq || !makesBoard(s)) return;
+    msgEl.textContent = `Score ${s} · top 5!`;
+    initialsInput.value = myInitials;
+    initialsForm.hidden = false;
+    initialsForm.querySelector('button').disabled = false;
+    // Focus right away with a mouse and keyboard; on touch screens wait for a tap, so no keyboard pops up.
+    if (matchMedia('(pointer: fine)').matches) initialsInput.focus({ preventScroll: true });
+  }
+
+  function hideSave() {
+    initialsForm.hidden = true;
+    if (document.activeElement && initialsForm.contains(document.activeElement)) document.activeElement.blur();
+  }
+
+  initialsForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const name = initialsInput.value.trim().toUpperCase();
+    if (!/^[A-Z]{3}$/.test(name)) { initialsInput.focus(); return; }
+    const id = gameId, s = score, req = tokenReq;
+    tokenReq = null;   // one submission per game
+    initialsForm.querySelector('button').disabled = true;
+    myInitials = name;
+    try { localStorage.setItem('snake-initials', name); } catch (e) {}
+    req.then(token => api('/scores', { name, score: s, token }))
+      .then(d => {
+        board = d.top;
+        const rank = board.findIndex(r => r.name === name) + 1;
+        return rank ? `${name} is #${rank} in the top 5` : `Saved, but ${name} has a better score already`;
+      }, err => err.message)
+      .then(text => {
+        renderBoard();
+        if (id !== gameId || state !== 'over') return;
+        hideSave();
+        msgEl.textContent = text;
+      });
+  });
 
   // ------------------------------------------------------- scroll reveal
   const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
@@ -117,6 +202,7 @@
     // engineInit prepends its own root styles; these come after and win
     boardEl.style.cssText = 'background:transparent;touch-action:auto;overflow:hidden;position:absolute;inset:0;';
     engineInit(gameInit, gameUpdate, gameUpdatePost, gameRender, undefined, [], boardEl);
+    loadBoard();
   }
 
   // ------------------------------------------------------------ the game
@@ -194,6 +280,9 @@
     const isBest = score > 0 && score === best;
     showOverlay(won ? `You filled the board — ${score}!` :
       `Score ${score}${isBest ? ' · new best' : ''}`, 'Play again', 0.7);
+    // check against a fresh board, since others may have played since this page loaded
+    const id = gameId, s = score;
+    if (s > 0 && tokenReq) loadBoard().then(() => offerSave(id, s));
   }
 
   function burst(c) {
@@ -205,7 +294,14 @@
 
   function start() {
     if (state === 'loading' || state === 'playing') return;
-    if (state !== 'paused') reset();
+    if (state !== 'paused') {
+      reset();
+      gameId++;
+      hideSave();
+      // a token from the server, issued now, that this game's score is submitted with
+      const req = tokenReq = board ? api('/start', {}).then(d => d.token) : null;
+      if (req) req.catch(() => { if (tokenReq === req) tokenReq = null; });
+    }
     state = 'playing';
     hideOverlay();
     setTouchPlaying(true);
@@ -316,7 +412,7 @@
   addEventListener('keydown', e => {
     if (e.ctrlKey || e.metaKey || e.altKey || state === 'loading') return;
     const t = e.target;
-    if (t && t.closest && t.closest('input,textarea,select,[contenteditable]')) return;
+    if (t && t.closest && t.closest('input,textarea,select,[contenteditable],form')) return;
     const code = e.code;
     if (state === 'playing') {
       // claim steering keys so the page doesn't scroll under the game
