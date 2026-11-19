@@ -28,6 +28,9 @@
   let clock = 0, acc = 0, score = 0, best = 0, shake = 0, deadAt = 0;
   let particles = [], colors, sounds;
   let revealed = false, onScreen = false;
+  // Declared up here, not beside loadEngine(): a reload part way down the page calls loadEngine()
+  // during setup below, before the script reaches that function.
+  let engineRequested = false;
 
   try { best = +localStorage.getItem('snake-best') || 0; } catch (e) {}
   bestEl.textContent = best;
@@ -152,7 +155,6 @@
   setTimeout(loadEngine, 4000);              // or fetch it once the intro has played
 
   // ------------------------------------------------------- engine loading
-  let engineRequested = false;
   function loadEngine() {
     if (engineRequested) return;
     engineRequested = true;
