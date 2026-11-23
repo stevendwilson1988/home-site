@@ -25,8 +25,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@500;700&family=Nunito:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:ital,wght@0,400;0,500;1,400&display=swap">
 <style>
-  /* Layout: full-bleed mountain-lake photo; the name draws itself in the sky, then the site links draw in below it. */
+  /* Layout: full-bleed mountain-lake photo; the site title sits in the sky, then the site links draw in below it. */
   *, *::before, *::after { box-sizing: border-box; }
   :root {
     --sky: #12305a;
@@ -74,28 +75,31 @@
     gap: clamp(1.8rem, 5vh, 3rem);
     padding-block: 20vh 6rem;
   }
-  .name-wrap { width: min(92vw, 980px); }
-  #name {
-    display: block;
-    width: 100%; height: auto; overflow: visible;
-    filter: drop-shadow(0 2px 3px var(--shade)) drop-shadow(0 6px 24px rgba(8, 22, 48, 0.45));
+  /* Hero: site title, byline, tagline. Static, no animation. */
+  .hero { position: relative; text-align: center; max-width: 100%; }
+  /* Soft dark scrim so the text holds up where it crosses white cloud. Fades out with no visible edge. */
+  .hero::before {
+    content: "";
+    position: absolute; top: -32%; bottom: -32%; z-index: -1;
+    left: 50%; width: min(100vw, 128%); translate: -50% 0;   /* never wider than the screen */
+    background: radial-gradient(closest-side, rgba(8, 22, 48, 0.6), rgba(8, 22, 48, 0.55) 55%, rgba(8, 22, 48, 0.3) 78%, transparent);
+    pointer-events: none;
   }
-  #name text {
-    font-family: var(--display);
-    font-weight: 700;
-    font-size: 100px;
-    fill: var(--ink);
-    fill-opacity: 0;
-    stroke: var(--ink);
-    stroke-width: 1.6;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+  .hero-title {
+    margin: 0;
+    font: 700 clamp(3rem, 9vw, 8rem) / 1 "Space Grotesk", system-ui, sans-serif;
+    letter-spacing: -0.03em;
+    color: #ffffff;
   }
-  .play #name text {
-    animation:
-      draw 1.3s var(--ease-draw) forwards,
-      fill .8s ease forwards,
-      rise 1.3s var(--ease-rise) forwards;
+  .hero-by {
+    margin: 20px 0 0;
+    font: 500 clamp(1.125rem, 2vw, 1.625rem) "Space Grotesk", system-ui, sans-serif;
+    color: #bcd6f7;
+  }
+  .hero-tag {
+    margin: 44px 0 0;
+    font: italic 400 clamp(1rem, 1.4vw, 1.25rem) "Inter", system-ui, sans-serif;
+    color: #e6eef9;
   }
 
   /* Site links: same draw-then-fill lettering, set in pills. */
@@ -151,7 +155,6 @@
   }
 
   @keyframes draw { to { stroke-dashoffset: 0; } }
-  @keyframes fill { from { fill-opacity: 0; } to { fill-opacity: 1; stroke-width: 0.4; } }
   @keyframes fill-sm { from { fill-opacity: 0; } to { fill-opacity: 1; stroke-width: 0.2; } }
   @keyframes rise { from { transform: translateY(14px); } to { transform: translateY(0); } }
   @keyframes appear { to { opacity: 1; } }
@@ -391,13 +394,17 @@
 
   @media (max-width: 520px) {
     main { padding-top: 14vh; }
+    /* 3rem is wider than a phone screen for "scratchbuild.net"; scale with the viewport so it fits on one line. */
+    .hero-title { font-size: clamp(2rem, 11.5vw, 3rem); }
+    /* the title spans the screen here, so the scrim is a soft full-width band instead of an oval */
+    .hero::before { top: -18%; bottom: -18%; background: linear-gradient(transparent, rgba(8, 22, 48, 0.5) 22%, rgba(8, 22, 48, 0.5) 78%, transparent); }
     nav svg { height: 1rem; }
     #scroll-cue { bottom: calc(70px + env(safe-area-inset-bottom, 0px)); }
   }
   @media (prefers-reduced-motion: reduce) {
     #scene { animation: none; }
-    .play #name text, .play nav text, .play nav li, .play nav a::before { animation: none; }
-    #name text, nav text { fill-opacity: 1; stroke-dashoffset: 0 !important; stroke-width: 0.3; }
+    .play nav text, .play nav li, .play nav a::before { animation: none; }
+    nav text { fill-opacity: 1; stroke-dashoffset: 0 !important; stroke-width: 0.3; }
     nav li, nav a::before { opacity: 1; transform: none; }
     .play-copy, .play-board-wrap { transform: none; }
     #scroll-cue > span { animation: none; opacity: 1; }
@@ -415,13 +422,15 @@
 <div id="scene" role="img" aria-label="A mountain reflected in a still lake under a blue sky with white clouds"></div>
 <div class="halo" aria-hidden="true"></div>
 <main id="stage">
-  <h1 class="name-wrap" style="margin:0">
-    <svg id="name" role="img" aria-label="Steve Wilson"></svg>
-  </h1>
+  <header class="hero">
+    <h1 class="hero-title">scratchbuild.net</h1>
+    <p class="hero-by">by Steve Wilson</p>
+    <p class="hero-tag">The most important website ever.</p>
+  </header>
   <nav aria-label="Pages">
     <ul id="links">
       <li><a href="/whos-hacking-me/">Who's hacking scratchbuild.net?</a></li>
-      <li><a href="/ai-cve-watch/">AI CVE Watch</a></li>
+      <li><a href="/the-ai-cve-patch-apocalypse/">The AI CVE Patch Apocalypse</a></li>
     </ul>
   </nav>
 </main>
@@ -470,21 +479,11 @@
 
 <script>
 (() => {
-  // Name comes from the link's #anchor (e.g. #Steve), otherwise the default.
-  const DEFAULT_NAME = "Steve Wilson";
-  const fromHash = decodeURIComponent(location.hash.slice(1)).replace(/[-_]+/g, " ").trim();
-  const NAME = fromHash || DEFAULT_NAME;
-  document.title = NAME;
-
   const NS = "http://www.w3.org/2000/svg";
   const stage = document.getElementById("stage");
-  const svg = document.getElementById("name");
-  svg.setAttribute("aria-label", NAME);
 
-  // Name timing: letter i starts at i*STEP, fill finishes FILL_END after that.
-  const STEP = 0.2, FILL_END = 0.9 + 0.8;
-  // Links start this long before the name finishes, then follow each other.
-  const LEAD = 0.6, LINK_STEP = 0.14;
+  // Links draw in shortly after load, one after another.
+  const LINK_START = 0.3, LINK_STEP = 0.14;
 
   // Turn each link's text into an SVG label once, sized to its own text.
   const labels = [...document.querySelectorAll("#links a")].map(a => {
@@ -516,29 +515,7 @@
 
   function build() {
     stage.classList.remove("play");
-    svg.replaceChildren();
-    const gap = 4, space = 34;
-    let x = 0, i = 0;
-    for (const ch of NAME) {
-      if (ch === " ") { x += space; continue; }
-      const el = document.createElementNS(NS, "text");
-      el.textContent = ch;
-      el.setAttribute("y", "100");
-      svg.appendChild(el);
-      const w = el.getComputedTextLength();
-      el.setAttribute("x", x);
-      x += w + gap;
-      el.style.strokeDasharray = 900;
-      el.style.strokeDashoffset = 900;
-      const delay = i * STEP;
-      el.style.animationDelay = `${delay}s, ${delay + 0.9}s, ${delay}s`;
-      i++;
-    }
-    svg.setAttribute("viewBox", `-10 0 ${Math.max(x - gap, 1) + 20} 130`);
-
-    const nameEnd = (i - 1) * STEP + FILL_END;
-    const linkStart = Math.max(0, nameEnd - LEAD);
-    labels.forEach(({ a }, j) => a.parentElement.style.setProperty("--d", (linkStart + j * LINK_STEP).toFixed(2) + "s"));
+    labels.forEach(({ a }, j) => a.parentElement.style.setProperty("--d", (LINK_START + j * LINK_STEP).toFixed(2) + "s"));
 
     // Restart every animation cleanly (also used by Replay).
     void stage.offsetWidth;
